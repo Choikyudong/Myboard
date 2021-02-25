@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 해당 페이지는 로그백이라는 것을 적용하는 페이지로
+	로그백(Logback)이란 XML Mapper에 선언된 쿼리문이 실행시
+	해당 쿼리를 로그를 콘솔에 출력하는 용도 -->
+<configuration debug="true">
+
+<!-- 1.appender는 전달받은 로그를 어디에 출력할지 결정하는 용도로
+	콘솔 출력, 파일 저장, DB저장 등이 있따.
+	2.encoder는 appender에 포함되어 출력할 로그 형식을 지정
+	3.logger는 로그를 출력하는 요소로 level 속성을 통해 출력할 로그의
+	레벨을 조절하여 appender에 전달
+	첫번째 로거에 name은 자바 패키지 경로를 의미 -->
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<Pattern>%d %5p [%c] %m%n</Pattern>
+		</encoder>
+	</appender>
+
+	<appender name="console-infolog" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<Pattern>%d %5p %m%n</Pattern>
+		</encoder>
+	</appender>
+	
+	<logger name="Hellospring" level="DEBUG" appender-ref="console"/>
+	<logger name="jdbc.sqlonly" level="INFO" appender-ref="console-infolog"/>
+	<logger name="jdbc.resultsettable" level="INFO" appender-ref="console-infolog"/>
+
+	<!-- 로그의 레벨(알면좋다)
+		fatal = 아주 심각한 에러 발생 :: error = 요청 처리 중 문제 발생
+		warn = 실행에 문제는 없지만 시스템 에러의 원인이 될 수 있는 경고 메시지
+		info = 상태 변경 같은 정보 메시지 :: debug = 개발 시 디버그 용도
+		trace = debug 레벨이 광범위한 것을 해결하기 위해 상세한 이벤트 표시 -->
+
+	<!-- 로그 타입
+		sqlonly = sql로그를 남기고 Prepared Statement같은 건 자동으로 변경됨
+		sqltiming = sql 실행시간을 출력
+		udit = resultset을 제외한 모든 jdbc 호출 정보를 출력 
+		resultset = resultset을 포함한 모든 jdbc 호출 정보 출력
+		resultsettable = sql 조회 결과를 테이블 형태로 출력
+		connection = connection의 연결과 종료 로그를 출력, 누수 문제 시 써보자-->
+		
+	<root level="off">
+		<appender-ref ref="console" />
+	</root>
+	
+</configuration>

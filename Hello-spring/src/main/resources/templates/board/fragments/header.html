@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<!-- th:fragment는 다른 HTML에서 include 또는 replace 속성을 
+	사용해서 적용을 할 수 있도록 한다. -->
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+	<head th:fragment="main-head">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<th:block layout:fragment="title"></th:block>
+		<!-- layout:fragment 속성에 이름을 지정해서 실제 content 페이지
+			내용을 채우는 기능이다. 동적인 처리가 필요할 때 사용 -->
+		<!-- <link rel="stylesheet" th:href="@{/fonts/Memberfonts/materia-design-iconic-font.min.css}"> -->
+		<link rel="stylesheet" th:href="@{/css/style.css}" />
+		<!-- <link rel="stylesheet" th:href="@{/css/MemberCss/style.css}" /> -->
+		<!-- href는 a태그와 동일하며 웹 애플리케이션을 구분하는
+			콘텍스트 경로를 포함한다. properties에서 콘텍스트 변경가능 -->
+		<link rel="stylesheet" th:href="@{/plugin/mCustomScrollbar/jquery.mCustomScrollbar.min.css}" />
+
+		<th:block layout:fragment="add-css"></th:block>
+		<title>Myboard</title>
+	</head>
+</html>

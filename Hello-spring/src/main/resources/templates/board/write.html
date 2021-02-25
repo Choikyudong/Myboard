@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" 
+xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" 
+layout:decorator="board/layout/basic">
+<!-- xmlns:th는 타임리프의 th 속성을 사용하기 위한 선언
+	xmlns:layout은 타임리프의 레이아웃 기능을 사용하기 위한 선언
+	layout:decorator는 레이아웃으로 basic.html을 사용한다는 의미 -->
+	<th:block layout:fragment="title">
+	<!-- fragment 속성에 이름을 지정하여 
+		실제 content 페이지의 내용을 채운다. -->
+		<title>The page is a write page</title>
+	</th:block>
+	
+	<th:block layout:fragment="content">
+		<div class="card-content">
+			<form class="form-horizontal" th:action="@{/board/register.do}" th:object="${board}" method="post" enctype="multipart/form-data" onsubmit="return registerBoard(this)">
+	<!-- onsubmit은 폼 데이터를 컨트롤러에 전송하기 전에 폼 데이터의 유효성을 검사하거나 할 떄 사용하는 이벤트이다. 
+		함수명 앞에 return이 선언된 것은 자바스크립트 이벤트가 기본적으로 return true 성향을 가지기 떄문이다. 
+		없을 경우 form이 submit했을 떄 함수가 실행하지 않는다. 
+		th:object 속성 ${board}는 컨트롤러에서 뷰로 전달한 boardDTO의 객체이다. 해당 속성을 이용하여
+		th:field라는 사용자 입력(input, textarea 등)의 id, name 속성 값이 자동으로 매핑되어
+		각 속성을 따로 지정할 필요가 없으며 ${}가 아닌 *{}을 사용한다. 둘다 컨트롤러에서 객체를 전달 받은 경우에만 사용가능-->
+				
+				<input type="hidden" th:if="*{idx != null and idx > 0}" th:field="*{idx}" />
+				
+				<input type="hidden" th:field="*{changeYn}" value="N" />
+				<!-- 파일이 변경되면 해당 파라미터로 파일 삭제 및 재등록 처리 -->
+
+				<div class="form-group">
+					<label for="noticeYn" class="col-sm-2 control-label">공지글 설정</label>
+					<div class="col-sm-10" style="margin-top: 10px;">
+						<input type="checkbox" th:value="*{noticeYn}" id="noticeYn" name="noticeYn" th:checked="*{#strings.equals( noticeYn, 'Y' )}" />
+						<!-- th:checked 속성을 이용해서 조건이 true면 checked 속성 적용한다. -->
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="secretYn" class="col-sm-2 control-label">비밀글 설정</label>
+					<div class="col-sm-10" style="margin-top: 10px;">
+						<input type="checkbox" th:value="*{secretYn}" id="secretYn" name="secretYn" th:checked="*{#strings.equals( secretYn, 'Y' )}" />
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="title" class="col-sm-2 control-label">제목</label>
+					<div class="col-sm-10">
+						<input type="text" th:field="*{title}" class="form-control" placeholder="제목을 입력해 주세요." />
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="writer" class="col-sm-2 control-label">작성자</label>
+					<div class="col-sm-10">
+						<input th:value="${session.memberVO.nickname}" th:name="writer" class="form-control" readonly="readonly" />
+						<!-- th:field로 writer를 입력시 th:value로 세션값을 불러올수가 없어서 name으로 변경한다. -->
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="content" class="col-sm-2 control-label">내용</label>
+					<div class="col-sm-10">
+						<textarea th:field="*{content}" class="form-control" placeholder="내용을 입력해 주세요." style="resize: none;"></textarea>
+					</div>
+				</div>
+				
+				<!-- 파일 업로드 -->
+				<!--/* 저장된 파일이 없는 파일 영역 */-->
+				<!-- th:if로 openBoardWrite에서 전달받은 fileList가 비어있으면 해당 div가 출력 -->
+				<div th:if="${#lists.isEmpty( fileList )}" data-name="fileDiv" class="form-group filebox bs3-primary">
+					<label for="file_0" class="col-sm-2 control-label">파일1</label>
+						<div class="col-sm-10">
+							<input type="text" class="upload-name" value="파일 찾기" readonly />
+							<label for="file_0" class="control-label">찾아보기</label>
+							<input type="file" name="files" id="file_0" class="upload-hidden" onchange="changeFilename(this)" />
+	
+							<button type="button" onclick="addFile()" class="btn btn-bordered btn-xs visible-xs-inline visible-sm-inline visible-md-inline visible-lg-inline">
+							<i class="fa fa-plus" aria-hidden="true"></i>
+							</button>
+							<button type="button" onclick="removeFile(this)" class="btn btn-bordered btn-xs visible-xs-inline visible-sm-inline visible-md-inline visible-lg-inline">
+							<i class="fa fa-minus" aria-hidden="true"></i>
+							</button>
+						</div>
+				</div>
+
+				<!--/* 저장된 파일이 있는 파일 영역 */-->
+				<!-- 해당 div는 파일이 있으면 출력이 되는 영역으로 컨트롤러에서 받은 fileList의 개수만큼 forEach를 실행하여 화면에 출력 -->
+				<div th:unless="${#lists.isEmpty( fileList )}" th:each="row, status : ${fileList}" data-name="fileDiv" class="form-group filebox bs3-primary">
+					<label th:for="|file_${status.index}|" class="col-sm-2 control-label">[[ |파일${status.count}| ]]</label>
+						<div class="col-sm-10">
+							<input type="hidden" name="fileIdxs" th:value="${row.idx}" />
+							<input type="text" class="upload-name" th:value="${row.originalName}" readonly />
+							<label th:for="|file_${status.index}|" class="control-label">찾아보기</label>
+							<input type="file" name="files" th:id="|file_${status.index}|" class="upload-hidden" onchange="changeFilename(this)" />
+	
+							<button th:if="${status.first}" type="button" onclick="addFile()" class="btn btn-bordered btn-xs visible-xs-inline visible-sm-inline visible-md-inline visible-lg-inline">
+							<i class="fa fa-plus" aria-hidden="true"></i>
+							</button>
+							<button type="button" onclick="removeFile(this)" class="btn btn-bordered btn-xs visible-xs-inline visible-sm-inline visible-md-inline visible-lg-inline">
+							<i class="fa fa-minus" aria-hidden="true"></i>
+							</button>
+					</div>
+				</div>
+				
+				<div id="btnDiv" class="btn_wrap text-center" th:object="${params}">
+					<a th:href="|@{/board/list.do}*{makeQueryString(currentPageNo)}|" class="btn btn-default waves-effect waves-light">뒤로가기</a>
+					<button type="submit" class="btn btn-primary waves-effect waves-light">저장하기</button>
+				</div>
+			</form>
+		</div>
+	</th:block>
+
+	<th:block layout:fragment="script">
+	<!-- 자바스크립트도 페이지마다 로직이 다르므로 사용 -->
+		<script th:inline="javascript">
+		//타임리프에서는 th:inline으로 자바스크립트를 지정해야한다.
+		//<!CDATA[]]>는 특수문자를 전부 문자열로 치환할 때 사용
+			/*<![CDATA[*/
+				
+			function registerBoard(form) {
+			//form에서 onsubmit 이벤트의 this는 이 녀석이다.
+
+				form.noticeYn.value = form.noticeYn.checked == false ? 'N' : 'Y';
+				form.secretYn.value = form.secretYn.checked == false ? 'N' : 'Y';
+				//여기서 체크 여부에 따라 값을 지정한다.
+
+				var result = (
+						   isValid(form.title, "제목", null, null)
+						&& isValid(form.writer, "시발", null, null)
+						&& isValid(form.content, "내용", null, null)
+				);
+				/* 
+				 * 자바스크립트 파일에 common.js에서 isValid함수를 이용하여
+				 * 필수적으로 들어가야하는 값들의 유효성 검사를 진행한다.
+				 * 여기서 if else 쓰고 해도 되지만 너무 많으면 가독성이 떨어진다고 한다.
+				 */
+				
+				if ( result == false ) {
+					return false;
+				}
+				
+				var idx = /*[[${board.idx}]]*/;
+				if(isEmpty(idx)==false) {
+					var queryString = /*[[ ${params.makeQueryString(params.currentPageNo)} ]]*/;
+					
+					queryString = new URLSearchParams(queryString);
+					queryString.forEach(function(value, key) {
+						if (isEmpty(value) == false) {
+							$(form).append('<input type="hidden" name="' + key + '" value="' + value + '" />');
+						}
+					});
+				}
+			} //function end
+			
+			//컨트롤러에서 전달받은 fileList 객체를 의미
+			const fileList = /*[[${fileList}]]*/;
+			
+			let fileIdx = isEmpty(fileList) ? 0 : fileList.length;
+			//파일이 포함된 게시글 수정의 경우에는 각 영역의 <labe> 태그와 <input> 태그가
+			//file_${fileIdx}에 해당하는 id를 가지고 있어서 인덱스 증가 처리를 위해서는 
+			//fileList의 크기 기준으로 초기화 되어야 합니다.
+
+			function addFile() {
+
+				/* const은 var, let과 같은 역활인거 처럼 보이지만
+				  var는 ES5전 부터 사용되었는데 var는 변수 선언 방식에 대해서 단점을 지적받아왔고
+				  그래서 ES6 이후 let이라는 새로운 선언 방식으로 나왔고 let은 변수에 재할당이 가능하다.
+				  const은 let과 반대로 선언 후 값을 재할당 할 수 없다. let이 무조건 좋고 보단 상황에 맞춰서 */
+				
+				  const fileDivs = $('div[data-name="fileDiv"]'); 
+				// 업로드 파일 리스트
+				
+				if (fileDivs.length > 2) {
+					alert('파일은 최대 세 개까지 업로드 할 수 있습니다.');
+					return false;
+				}
+
+				fileIdx++;
+
+				const fileHtml = `
+					<div data-name="fileDiv" class="form-group filebox bs3-primary">
+						<label for="file_${fileIdx}" class="col-sm-2 control-label"></label>
+						<div class="col-sm-10">
+							<input type="text" class="upload-name" value="파일 찾기" readonly />
+							<label for="file_${fileIdx}" class="control-label">찾아보기</label>
+							<input type="file" name="files" id="file_${fileIdx}" class="upload-hidden" onchange="changeFilename(this)" />
+			
+							<button type="button" onclick="removeFile(this)" class="btn btn-bordered btn-xs visible-xs-inline visible-sm-inline visible-md-inline visible-lg-inline">
+								<i class="fa fa-minus" aria-hidden="true"></i>
+							</button>
+						</div>
+					</div>
+				`;
+			
+				$('#btnDiv').before(fileHtml);
+			} //function end
+			
+			function removeFile(elem) {
+
+				document.getElementById('changeYn').value = 'Y';
+
+				const prevTag = $(elem).prev().prop('tagName');
+				if (prevTag === 'BUTTON') {
+					const file = $(elem).prevAll('input[type="file"]');
+					const filename = $(elem).prevAll('input[type="text"]');
+					file.val('');
+					filename.val('파일 찾기');
+
+					$(elem).prevAll('input[name="fileIdxs"]').remove();
+					return false;
+				}
+
+				const target = $(elem).parents('div[data-name="fileDiv"]');
+				target.remove();
+				
+			} //function end
+			
+			function changeFilename(file) {
+			//업로드할 파일명을 렌더링 해줌
+			
+				document.getElementById('changeYn').value = 'Y';
+			
+				file = $(file);
+				const filename = file[0].files[0].name;
+				const target = file.prevAll('input.upload-name');
+				target.val(filename);
+				
+				file.prevAll('input[name="fileIdxs"]').remove();
+				/* 게시글 수정의 경우에는 hidden 타입의 'fileIdxs'가 포함되서
+				게시글 수정을 기준으로 파일에 변경이 있으면 hidden 타입의 fileIdxs 값을 제거한다.
+				해당 로직이 없으면 게시글을 저장하고 기존의 파일과 함께 새로운 파일이 업로드된다. */
+			
+			} //function end
+			
+			/*]]>*/
+		</script>
+	</th:block>
+</html>

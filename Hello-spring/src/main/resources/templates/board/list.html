@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorator="board/layout/basic">
+	<th:block layout:fragment="title">
+		<title>This page is a list page</title>
+	</th:block>
+
+	<th:block layout:fragment="search">
+		<div th:replace="board/fragments/common :: search"></div>
+	</th:block>
+
+	<th:block layout:fragment="content">
+		<div class="table-responsive clearfix">
+			<table class="table table-hover">
+				<thead>
+					<tr>
+						<th>번호</th>
+						<th>제목</th>
+						<th>작성자</th>
+						<th>등록일</th>
+						<th>조회 수</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:if="${not #lists.isEmpty( boardList )}" th:each="row : ${boardList}">
+					<!-- 1.lists.isEmpty는 지정한 데이터가 비어있는 확인하는 용도로
+						컨트롤러의 openBoardList 메서드에서 전달받은 게시글 데이터가 비어있는지 확인한다.
+						isEmpty는 비어있으면 true를 리턴하는데 함수 앞 not으로 false값을 받아온다.
+						물론 #list.isEmpty( boardList ) == false로 해도 된다. 
+						 2. th:each는 JSTL<c:forEach>, 자바<forEach>와 유사한 기능으로
+						 여기서는 'row'라는 이름으로 boardList를 출력한다.-->
+						 
+						<td scope="row" th:text="${#strings.equals( row.noticeYn, 'Y' ) ? '공지' : row.idx}"></td>
+						<!-- #strings.equals 함수를 이용해서 공지 여부가 'Y'로 등록된 게시글이면
+							"공지"를 출력하고 'N'이면 게시글 번호를 출력한다. -->
+						<td class="text-left">
+							<a th:href="|@{/board/view.do}${params.makeQueryString(params.currentPageNo)}&idx=${row.idx}|" th:text="${row.title}"></a>
+						<!-- 상세 페이지로 이동 기능 이며 idx값을 전달하여 해당 페이지로 이동하지만
+							이전 페이지의 정보를 유지하기 위해서 이전 페이지 정보도 같이 전달한다.
+							타임리프에서 문자열을 연결하기 위해서는 |이렇게| 감싸줘야한다. -->
+						</td>
+						<td th:text="${row.writer}"></td>
+						<!-- 작성자를 텍스트 형식으로 출력 -->
+						<td th:text="${#temporals.format( row.insertTime, 'yyyy-MM-dd' )}"></td>
+						<!-- BoardDTO 클래스에 시간 관련 변수들을 temporals.format 함수를 통해
+							원하는 날짜 형태로 포맷할 수 있다. -->
+						<td th:text="${row.viewCnt}"></td>
+						<!-- 게시글 조회 수를 텍스트 형식으로 출력 -->
+					</tr>
+					<tr th:unless="${not #lists.isEmpty( boardList )}">
+						<td colspan="5">조회된 결과가 없습니다.</td>
+					</tr>
+					<!-- th:if & th:unless는
+						if, else와 와 비슷하지만 else부분인 th:unless에
+						th:if에 들어가는 조건과 동일한 조건을 지정해야한다. -->
+				</tbody>
+			</table>
+
+			<div class="btn_wrap text-right">
+				<a th:href="@{/board/write.do}" class="btn btn-primary waves-effect waves-light">Write</a>
+				<!-- 글쓰기 기능을 연결하는 버튼 -->
+			</div>
+
+			<th:block layout:fragment="paging">
+				<nav th:replace="board/fragments/common :: pagination"></nav>
+			</th:block>
+		</div>
+	</th:block>
+
+	<th:block layout:fragment="script">
+		<script th:inline="javascript">
+			/*<![CDATA[*/
+
+			function movePage(uri, queryString) {
+				location.href = uri + queryString;
+			}
+			
+			function searchBoard(form) {
+				/*[- 드롭다운이 아닌 메인 검색 키워드로 검색했을 때 -]*/
+				if (isEmpty(form) == true) {
+					var searchKeyword = document.getElementById("mainSearchKeyword");
+					if (isEmpty(searchKeyword.value) == true) {
+						alert("키워드를 입력해 주세요.");
+						searchKeyword.focus();
+						return false;
+					}
+
+					form = document.getElementById("searchForm");
+					form.searchKeyword.value = searchKeyword.value;
+					form.submit();
+				}
+
+				if (isEmpty(form.searchKeyword.value) == true) {
+					alert("키워드를 입력해 주세요.");
+					form.searchKeyword.focus();
+					return false;
+				}
+			}
+
+			/*]]>*/
+		</script>
+	</th:block>
+</html>

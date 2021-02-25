@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CommonMapper">
+
+	<sql id="paging">
+		LIMIT
+			#{paginationInfo.firstRecordIndex}, #{recordsPerPage}
+		<!-- 페이징 기능으로 공통적으로 사용 -->
+	</sql>
+
+	<sql id="search">
+	<!-- if는 자바의 if와 비슷
+		choose, when, otherwise는 자바의 스위치문과 비슷
+		choose로 감싸고 when으로 조건을 주고 otherwise로 외의 조건 처리 -->
+		<!-- 검색 키워드가 있을 때 -->
+		<if test="searchKeyword != null and searchKeyword != ''">
+			<choose>
+				<!-- 검색 유형이 있을 때 -->
+				<when test="searchType != null and searchType != ''">
+					<choose>
+						<when test="'title'.equals(searchType)">
+							AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+						</when>
+						<when test="'content'.equals(searchType)">
+							AND content LIKE CONCAT('%', #{searchKeyword}, '%')
+						</when>
+						<when test="'writer'.equals(searchType)">
+							AND writer LIKE CONCAT('%', #{searchKeyword}, '%')
+						</when>
+					</choose>
+				</when>
+				<!-- 검색 유형이 없을 때 -->
+				<otherwise>
+					AND
+						(
+							   title LIKE CONCAT('%', #{searchKeyword}, '%')
+							OR content LIKE CONCAT('%', #{searchKeyword}, '%')
+							OR writer LIKE CONCAT('%', #{searchKeyword}, '%')
+						)
+				</otherwise>
+			</choose>
+		</if>
+	</sql>
+
+</mapper>

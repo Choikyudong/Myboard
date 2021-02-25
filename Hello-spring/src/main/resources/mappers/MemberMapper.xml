@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Hellospring.mapper.MemberMapper">
+
+	<sql id="memberColumns">
+		  id
+		, nickname
+		, pwd
+		, email
+		, phone
+		, delete_yn
+		, insert_time
+		, delete_time
+	</sql>
+
+	<insert id="saveMember" parameterType="MemberDTO">
+		INSERT INTO tb_member (
+			<include refid="memberColumns" />
+		) VALUES (
+			#{id}
+			, #{nickname}
+			, #{pwd}
+			, #{email}
+			, #{phone}
+		    , IFNULL(#{deleteYn}, 'N')
+			, NOW()
+			, NULL
+		)
+	</insert>
+	
+	<select id="signMember" parameterType="MemberDTO" resultType="MemberDTO">
+		SELECT 
+			<include refid="memberColumns" />
+		FROM 
+			tb_member
+		WHERE 
+			id = #{id}
+	</select>
+
+</mapper>
